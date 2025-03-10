@@ -1,0 +1,4 @@
+.phi_venv
+__pycache__
+migrations
+db.sqlite3
