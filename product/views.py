@@ -1,17 +1,15 @@
 from django.shortcuts import render , get_object_or_404
-from django.http import HttpResponse
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 from product.models import Product , Category , Review
 from product.serializers import ProductSerializers , CategorySerializers ,ReviewSerializer
 from django.db.models import Count
-from rest_framework.views import APIView
-from rest_framework.mixins import CreateModelMixin , ListModelMixin
-from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework.viewsets import ModelViewSet
 from django_filters.rest_framework import DjangoFilterBackend
 from product.filters import ProductFilterSet
+from rest_framework.filters import SearchFilter , OrderingFilter
+from product.paginations import DefaultPagination
 # Create your views here.
 
 
@@ -20,9 +18,11 @@ class ProductViewSet(ModelViewSet):
     queryset = Product.objects.all()
     serializer_class = ProductSerializers
 
-    filter_backends = [DjangoFilterBackend]
-    # filterset_fields = ['category_id']
+    filter_backends = [DjangoFilterBackend , SearchFilter , OrderingFilter]
     filterset_class = ProductFilterSet
+    pagination_class = DefaultPagination
+    search_fields = ['name' , 'description' ] # 'category__name'
+    ordering_fields = ['price' , 'updated_at']
 
 
     def destroy(self , request , *args , **kwargs ):

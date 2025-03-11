@@ -16,7 +16,7 @@ class CategorySerializers(serializers.ModelSerializer):
 class ProductSerializers(serializers.ModelSerializer):
     class Meta:
         model = Product
-        fields = ['id' , 'name' , 'price' , 'stock' , 'category' , 'price_with_tax']
+        fields = ['id' , 'name' , 'description' , 'price' , 'stock' , 'category' , 'price_with_tax']
     
     price_with_tax = serializers.SerializerMethodField( method_name='calculate_tax')
     def calculate_tax(self , product):
