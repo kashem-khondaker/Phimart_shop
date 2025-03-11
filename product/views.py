@@ -10,22 +10,20 @@ from rest_framework.views import APIView
 from rest_framework.mixins import CreateModelMixin , ListModelMixin
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework.viewsets import ModelViewSet
-
+from django_filters.rest_framework import DjangoFilterBackend
+from product.filters import ProductFilterSet
 # Create your views here.
 
 
 
 class ProductViewSet(ModelViewSet):
-    
+    queryset = Product.objects.all()
     serializer_class = ProductSerializers
 
-    def get_queryset(self):
-        queryset = Product.objects.all()
-        category_id = self.request.query_params.get('category')
+    filter_backends = [DjangoFilterBackend]
+    # filterset_fields = ['category_id']
+    filterset_class = ProductFilterSet
 
-        if category_id is not None:
-            queryset = Product.objects.filter(category_id=category_id)
-        return queryset
 
     def destroy(self , request , *args , **kwargs ):
         product = self.get_object()
