@@ -18,10 +18,37 @@ cart_router.register(r'items' , CartItemViewSet , basename='cart-item')
 urlpatterns = [
     path('' , include(router.urls)),
     path('' , include(product_router.urls)),
-    path('' , include(cart_router.urls))
+    path('' , include(cart_router.urls)),
+    path('auth/', include('djoser.urls')),
+    path('auth/', include('djoser.urls.jwt')),
 ]
 
 # urlpatterns = [
 #     path('products/' , include('product.products_urls')),
 #     path('categories/' , include('product.categories_urls')),
 # ]
+
+
+# /users/
+
+# /users/me/
+
+# /users/resend_activation/
+
+# /users/set_password/
+
+# /users/reset_password/
+
+# /users/reset_password_confirm/
+
+# /users/set_username/
+
+# /users/reset_username/
+
+# /users/reset_username_confirm/
+
+# /jwt/create/ (JSON Web Token Authentication)
+
+# /jwt/refresh/ (JSON Web Token Authentication)
+
+# /jwt/verify/ (JSON Web Token Authentication)
