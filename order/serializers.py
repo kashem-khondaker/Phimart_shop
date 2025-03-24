@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from product.models import Product
 from order.models import Order , Cart , CartItem , OrderItem
+from order.services import OrderServices
 
 class SimpleProductSerializer(serializers.ModelSerializer):
     class Meta:
@@ -81,37 +82,12 @@ class CreateOrderSerializer(serializers.Serializer):
     def create(self, validated_data):
         user_id = self.context['user_id']
         cart_id = validated_data['cart_id']
+        try:
+            order = OrderServices.create_order(user_id=user_id , cart_id=cart_id)
+            return order
+        except ValueError as e:
+            raise serializers.ValidationError(str(e))
 
-        # কার্ট এবং কার্ট আইটেমস আনছি
-        cart = Cart.objects.get(pk=cart_id)
-        cart_items = CartItem.objects.filter(cart=cart).select_related('product')
-
-        # অর্ডারের মোট দাম হিসাব করছি
-        total_price = sum([item.product.price * item.quantity for item in cart_items])
-
-        # নতুন অর্ডার তৈরি করছি
-        order = Order.objects.create(
-            user_id=user_id,
-            total_price=total_price
-        )
-
-        # OrderItem গুলো তৈরি করা
-        order_items = [
-            OrderItem(
-                order=order,
-                product=item.product,
-                quantity=item.quantity,
-                price=item.product.price,
-                total_price=item.product.price * item.quantity
-            ) for item in cart_items
-        ]
-        OrderItem.objects.bulk_create(order_items)
-
-        # কার্ট এবং কার্ট আইটেমস ডিলিট করছি
-        cart_items.delete()
-        cart.delete()
-
-        return order
 
     def to_representation(self, instance):
         return OrderSerializer(instance).data
