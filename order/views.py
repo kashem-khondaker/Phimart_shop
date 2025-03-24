@@ -2,16 +2,19 @@ from django.shortcuts import render
 from rest_framework.viewsets import GenericViewSet , ModelViewSet
 from rest_framework.mixins import CreateModelMixin , RetrieveModelMixin , DestroyModelMixin
 from order.models import Cart , CartItem , Order , OrderItem
-from order.serializers import CartSerializer , CartItemSerializer , AddCartItemSerializer , UpdateCartItemSerializer , OrderSerializer
+from order.serializers import CartSerializer , CartItemSerializer , AddCartItemSerializer , UpdateCartItemSerializer , OrderSerializer , CreateOrderSerializer
 from rest_framework.permissions import IsAuthenticated
 
 # Create your views here.
 
 
 class CartViewSet(CreateModelMixin, RetrieveModelMixin,DestroyModelMixin , GenericViewSet):
-    # queryset = Cart.objects.all()
     serializer_class = CartSerializer
     permission_classes = [IsAuthenticated]
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
     def get_queryset(self):
         if self.request.user.is_staff:
             return Cart.objects.prefetch_related('items__product').all()
@@ -41,7 +44,18 @@ class OrderViewSet(ModelViewSet):
     serializer_class = OrderSerializer
     permission_classes = [IsAuthenticated]
 
+    def get_serializer_class(self):
+        if self.request.method == "POST":
+            return CreateOrderSerializer
+        return OrderSerializer
+    
+    def get_serializer_context(self):
+        return {'user_id': self.request.user.id}
+
     def get_queryset(self):
+        queryset = Order.objects.prefetch_related('items__product')
+        
         if self.request.user.is_staff:
-            return Order.objects.prefetch_related('items__product').all()
-        return Order.objects.prefetch_related('items__product').filter(user=self.request.user)
+            return queryset.all()
+        
+        return queryset.filter(user=self.request.user)

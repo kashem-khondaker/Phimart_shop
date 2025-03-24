@@ -58,11 +58,64 @@ class CartSerializer(serializers.ModelSerializer):
     class Meta:
         model = Cart
         fields = ['id' , 'user' , 'items' , 'total_price']
+        read_only_fields = ['user']
     
     def get_total_price(self , cart:Cart):
         cart_items = cart.items.all().select_related('product')
         list = sum([item.product.price* item.quantity for item in cart_items])
         return list
+
+
+class CreateOrderSerializer(serializers.Serializer):
+    cart_id = serializers.UUIDField()
+
+    def validate_cart_id(self, cart_id):
+        if not Cart.objects.filter(pk=cart_id).exists():
+            raise serializers.ValidationError('No Cart Id found.')
+
+        if not CartItem.objects.filter(cart_id=cart_id).exists():
+            raise serializers.ValidationError('Cart is empty!')
+
+        return cart_id
+
+    def create(self, validated_data):
+        user_id = self.context['user_id']
+        cart_id = validated_data['cart_id']
+
+        # কার্ট এবং কার্ট আইটেমস আনছি
+        cart = Cart.objects.get(pk=cart_id)
+        cart_items = CartItem.objects.filter(cart=cart).select_related('product')
+
+        # অর্ডারের মোট দাম হিসাব করছি
+        total_price = sum([item.product.price * item.quantity for item in cart_items])
+
+        # নতুন অর্ডার তৈরি করছি
+        order = Order.objects.create(
+            user_id=user_id,
+            total_price=total_price
+        )
+
+        # OrderItem গুলো তৈরি করা
+        order_items = [
+            OrderItem(
+                order=order,
+                product=item.product,
+                quantity=item.quantity,
+                price=item.product.price,
+                total_price=item.product.price * item.quantity
+            ) for item in cart_items
+        ]
+        OrderItem.objects.bulk_create(order_items)
+
+        # কার্ট এবং কার্ট আইটেমস ডিলিট করছি
+        cart_items.delete()
+        cart.delete()
+
+        return order
+
+    def to_representation(self, instance):
+        return OrderSerializer(instance).data
+
 
 
 class OrderItemSerializer(serializers.ModelSerializer):
