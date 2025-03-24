@@ -39,6 +39,19 @@ class UpdateCartItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = CartItem
         fields = ['quantity']
+    
+    def update(self , instance , validated_data):
+        user = self.context['user']
+        new_status = validated_data['status']
+
+        if new_status == Order.CANCELLED:
+            return OrderSerializer.cancel_order(order = instance , user= user)
+        
+        # Admin Ki nah 
+        if not user.is_staff:
+            raise serializers.ValidationError( "You don't have permission to update another status ")
+
+        return super().update(instance , validated_data)
 
 
 class CartItemSerializer(serializers.ModelSerializer):
@@ -100,11 +113,15 @@ class OrderItemSerializer(serializers.ModelSerializer):
         model = OrderItem
         fields = ['id' , 'product' , 'quantity' , 'price' , 'total_price']
 
+class UpdateOrderSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Order
+        fields = ['status']
 
 class OrderSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer( many=True)
     class Meta:
         model = Order
-        fields = [ 'id', 'user' , 'status' , 'total_price' , "items" ]  #  'created_at' , 'updated_at'
+        fields = [ 'id', 'user' , 'status' , 'total_price' , "items" ]
 
 
