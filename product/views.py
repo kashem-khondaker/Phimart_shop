@@ -10,6 +10,8 @@ from rest_framework.filters import SearchFilter , OrderingFilter
 from product.paginations import DefaultPagination
 from rest_framework.permissions import DjangoModelPermissions
 from product.permissions import FullDjangoModelPermission , IsReviewAuthorOrReadOnly
+from api.permissions import IsAdminOrReadOnly
+
 # Create your views here.
 
 
@@ -28,6 +30,7 @@ class ProductViewSet(ModelViewSet):
 
 class ProductImageViewSet(ModelViewSet):
     serializer_class = ProductImageSerializer
+    permission_classes = [IsAdminOrReadOnly]
 
     def perform_create(self, serializer):
         serializer.save(product_id = self.kwargs['product_pk'])
