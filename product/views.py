@@ -75,7 +75,7 @@ class CategoryViewSet(ModelViewSet):
     serializer_class = CategorySerializers
     lookup_field = 'pk'
     # permission_classes = IsAdminOrReadOnly
-    permission_classes = [DjangoModelPermissions]
+    permission_classes = [IsAdminOrReadOnly]
 
 
 
