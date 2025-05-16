@@ -35,14 +35,7 @@ class CartViewSet(CreateModelMixin, RetrieveModelMixin,DestroyModelMixin , Gener
         return super().create(request, *args, **kwargs)
 
 class CartItemViewSet(ModelViewSet):
-
-    http_method_names = ['get' , 'post' , 'patch' , 'delete']
-
-    def get_serializer_context(self):
-        context = super().get_serializer_context()
-        if getattr(self, 'swagger_fake_view', False):
-            return context
-        return {'cart_id' : self.kwargs.get('cart_pk')}
+    http_method_names = ['get', 'post', 'patch', 'delete']
 
     def get_serializer_class(self):
         if self.request.method == 'POST':
@@ -51,11 +44,16 @@ class CartItemViewSet(ModelViewSet):
             return UpdateCartItemSerializer
         return CartItemSerializer
 
-    def get_queryset(self):
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
         if getattr(self, 'swagger_fake_view', False):
-            return CartItem.objects.none()
-        CartItem.objects.select_related('product').filter(cart_id=self.kwargs.get('cart_pk'))
-    
+            return context
+
+        return {'cart_id': self.kwargs.get('cart_pk')}
+
+    def get_queryset(self):
+        return CartItem.objects.select_related('product').filter(cart_id=self.kwargs.get('cart_pk'))
+
 
 class OrderViewSet(ModelViewSet):
     
