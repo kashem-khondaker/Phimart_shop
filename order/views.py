@@ -8,6 +8,8 @@ from rest_framework.decorators import action
 from order.services import OrderServices
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.decorators import api_view
+from sslcommerz_lib import SSLCOMMERZ 
 
 # Create your views here.
 
@@ -104,3 +106,40 @@ class OrderViewSet(ModelViewSet):
             return queryset.all()
         
         return queryset.filter(user=self.request.user)
+
+@api_view(['POST'])
+def initiate_payment(request):
+    user = request.user
+    amount = request.data.get("amount")
+    order_id = request.data.get('orderId')
+    num_items = request.data.get("numItems")
+
+    settings = { 'store_id': 'phima6852fbda7387e', 'store_pass': 'phima6852fbda7387e@ssl', 'issandbox': True } # production a false hobe 
+    sslcz = SSLCOMMERZ(settings)
+    post_body = {}
+    post_body['total_amount'] = amount
+    post_body['currency'] = "BDT"
+    post_body['tran_id'] = f"trx_{order_id}"
+    post_body['success_url'] = "http://127.0.0.1:8000/api/v1/payment/success/"
+    post_body['fail_url'] = "http://127.0.0.1:8000/api/v1/payment/failed/"
+    post_body['cancel_url'] = "http://127.0.0.1:8000/api/v1/orders/"
+    post_body['emi_option'] = 0
+    post_body['cus_name'] = f"{user.first_name} {user.last_name}"
+    post_body['cus_email'] = f"{user.email}"
+    post_body['cus_phone'] = f"{user.phone}"
+    post_body['cus_add1'] = f"{user.address}"
+    post_body['cus_city'] = "Dhaka"
+    post_body['cus_country'] = "Bangladesh"
+    post_body['shipping_method'] = "Courier"
+    post_body['multi_card_name'] = ""
+    post_body['num_of_item'] = num_items
+    post_body['product_name'] = "Test"
+    post_body['product_category'] = "Test Category"
+    post_body['product_profile'] = "general"
+    
+
+
+    response = sslcz.createSession(post_body) # API response
+    if response.get('status') == 'SUCCESS':
+        return Response({'payment_url': response['GatewayPageURL']})
+    return Response({'error': response.get('failedreason', 'Payment initiation failed')}, status=status.HTTP_400_BAD_REQUEST)
