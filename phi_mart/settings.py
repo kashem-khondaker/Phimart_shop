@@ -79,6 +79,7 @@ WSGI_APPLICATION = 'phi_mart.wsgi.app'
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
+    "https://pymart-front-end.vercel.app/"
 ]
 
 
