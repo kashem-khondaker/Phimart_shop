@@ -168,7 +168,7 @@ MEDIA_URL = '/media/'
 
 STATIC_ROOT = BASE_DIR / "staticfiles"
 # STATIC_FILES_DIR = BASE_DIR / 'static'
-STATICFILES_STORAGE = "whitenoise.storage.CompressedStaticFilesStorage"
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
 
 
