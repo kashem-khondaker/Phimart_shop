@@ -130,7 +130,7 @@ def initiate_payment(request):
     post_body['cus_add1'] = f"{user.address}"
     post_body['cus_city'] = "Dhaka"
     post_body['cus_country'] = "Bangladesh"
-    post_body['shipping_method'] = "Courier"
+    post_body['shipping_method'] = "NO"
     post_body['multi_card_name'] = ""
     post_body['num_of_item'] = num_items
     post_body['product_name'] = "Test"
