@@ -10,6 +10,9 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.decorators import api_view
 from sslcommerz_lib import SSLCOMMERZ 
+from django.conf import settings as main_settings
+from django.shortcuts import redirect
+from rest_framework.views import APIView
 
 # Create your views here.
 
@@ -120,9 +123,9 @@ def initiate_payment(request):
     post_body['total_amount'] = amount
     post_body['currency'] = "BDT"
     post_body['tran_id'] = f"trx_{order_id}"
-    post_body['success_url'] = "http://127.0.0.1:8000/api/v1/payment/success/"
-    post_body['fail_url'] = "http://127.0.0.1:8000/api/v1/payment/failed/"
-    post_body['cancel_url'] = "http://127.0.0.1:8000/api/v1/orders/"
+    post_body['success_url'] = f"{main_settings.BACKEND_URL}/payment/success/"
+    post_body['fail_url'] = f"{main_settings.BACKEND_URL}/payment/fail/"
+    post_body['cancel_url'] = f"{main_settings.BACKEND_URL}/payment/cancel/"
     post_body['emi_option'] = 0
     post_body['cus_name'] = f"{user.first_name} {user.last_name}"
     post_body['cus_email'] = f"{user.email}"
@@ -143,3 +146,29 @@ def initiate_payment(request):
     if response.get('status') == 'SUCCESS':
         return Response({'payment_url': response['GatewayPageURL']})
     return Response({'error': response.get('failedreason', 'Payment initiation failed')}, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['post'])
+def payment_success(request):
+    order_id = request.data.get('tran_id').split('_')[1]
+    order = Order.objects.get(id=order_id)
+    order.status  = "Ready to Ship"
+    order.save()
+    return redirect(f'{main_settings.FRONTEND_URL}/dashboard/orders')
+
+@api_view(['post'])
+def payment_cancel(request):
+    return redirect(f'{main_settings.FRONTEND_URL}/dashboard/orders')
+
+@api_view(['post'])
+def payment_fail(request):
+    return redirect(f'{main_settings.FRONTEND_URL}/dashboard/orders')
+
+class HasOrderedProduct(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self , request , product_id):
+        user = request.user
+        has_ordered = OrderItem.objects.filter(order__user=user , product_id=product_id).exists()
+        return Response({"hasOrdered" : has_ordered})
+
